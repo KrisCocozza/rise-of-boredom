@@ -35,16 +35,18 @@ export const QUEST_DEFS: QuestDef[] = [
   {
     id: "collect-food",
     title: "Feed The Team",
-    description: "Stockpile at least 30 Food.",
-    objective: { type: "stockpileAtLeast", resource: "food", amount: 30 },
+    description: "Produce 60 Food at an Urban Farm.",
+    // Measured on production rather than stockpile so it tracks actually building the farm, and
+    // so it can't be trivially satisfied by the starting resources. Set above the farm's 40-unit
+    // buffer cap so it can't be finished without collecting at least once.
+    objective: { type: "lifetimeProducedAtLeast", resource: "food", amount: 60 },
     reward: { credits: 60 },
   },
   {
     id: "collect-materials",
     title: "Raw Supply",
-    description: "Stockpile at least 60 Materials.",
-    // Must exceed the seed's starting Materials (40) — otherwise this completes for free on tick one.
-    objective: { type: "stockpileAtLeast", resource: "materials", amount: 60 },
+    description: "Produce 60 Materials at a Recycler.",
+    objective: { type: "lifetimeProducedAtLeast", resource: "materials", amount: 60 },
     reward: { credits: 80 },
   },
   {

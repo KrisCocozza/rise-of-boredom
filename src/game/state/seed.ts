@@ -13,7 +13,11 @@ export function createInitialState(): GameState {
   };
 
   return {
-    resources: { credits: 400, food: 20, materials: 40, components: 0 },
+    // Sized so the whole starter set (Housing 20 + Farm 25 + Recycler + Solar 15 materials, and
+    // ~240 credits) is affordable up front with room to spare, and so food doesn't go into
+    // deficit before a farm can realistically be producing. Components are deliberately 0 —
+    // earning the first batch at a Workshop is the point of the early chain.
+    resources: { credits: 600, food: 50, materials: 120, components: 0 },
     lifetimeProduced: {},
     buildings: [hq],
     completedQuestIds: [],

@@ -225,7 +225,10 @@ export const BUILDING_DEFS: BuildingDef[] = [
     levels: [
       {
         label: "Recycler",
-        cost: { credits: 60, materials: 10 },
+        // Credits only, deliberately: the Recycler is the only source of Materials, so charging
+        // Materials for it means a player who spends down to zero can never rebuild the thing
+        // that makes them — an unrecoverable dead end.
+        cost: { credits: 70 },
         buildSeconds: 18,
         workersRequired: 2,
         energyRequired: 3,
