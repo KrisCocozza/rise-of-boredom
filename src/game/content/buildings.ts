@@ -26,12 +26,16 @@ export interface BuildingLevel {
   /** Omitted for pure-capacity buildings (Housing, Solar) that don't accumulate a collectible resource. */
   recipe?: Recipe;
   outputCapacity?: number;
-  // Visual tuning, used by the windowed procedural skin when present (see buildingVisual.ts).
+  // Visual tuning, used by the procedural skins when present (see buildingVisual.ts).
   height: number;
   windowRows?: number;
   windowCols?: number;
+  /** Tint for lit windows — lets a category read as "residential" (warm) vs "industrial" (cool) at a glance. Defaults to warm gold. */
+  lightColor?: number;
   hasAntenna?: boolean;
   hasSign?: boolean;
+  /** Alternate skin for flat infrastructure (Solar): animated seam lines instead of windows. */
+  hasPanelLines?: boolean;
 }
 
 export type BuildingCategory = "headquarters" | "residential" | "production" | "infrastructure";
@@ -66,6 +70,11 @@ export const BUILDING_DEFS: BuildingDef[] = [
         energyProvided: 10,
         populationProvided: 4,
         height: 46,
+        windowRows: 2,
+        windowCols: 2,
+        lightColor: 0xfacc15,
+        hasAntenna: true,
+        hasSign: true,
       },
     ],
   },
@@ -131,6 +140,7 @@ export const BUILDING_DEFS: BuildingDef[] = [
         energyRequired: 0,
         energyProvided: 12,
         height: 14,
+        hasPanelLines: true,
       },
       {
         label: "Solar Array",
@@ -140,6 +150,7 @@ export const BUILDING_DEFS: BuildingDef[] = [
         energyRequired: 0,
         energyProvided: 24,
         height: 18,
+        hasPanelLines: true,
       },
       {
         label: "Grid-Tied Array",
@@ -149,6 +160,7 @@ export const BUILDING_DEFS: BuildingDef[] = [
         energyRequired: 0,
         energyProvided: 45,
         height: 22,
+        hasPanelLines: true,
       },
     ],
   },
@@ -169,6 +181,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "food", amount: 10 }, cycleSeconds: 20 },
         outputCapacity: 40,
         height: 12,
+        windowRows: 1,
+        windowCols: 3,
+        lightColor: 0x86efac,
       },
       {
         label: "Vertical Farm",
@@ -179,6 +194,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "food", amount: 22 }, cycleSeconds: 20 },
         outputCapacity: 70,
         height: 24,
+        windowRows: 2,
+        windowCols: 3,
+        lightColor: 0x86efac,
       },
       {
         label: "Automated Farm",
@@ -190,6 +208,10 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "food", amount: 34 }, cycleSeconds: 18 },
         outputCapacity: 100,
         height: 30,
+        windowRows: 2,
+        windowCols: 4,
+        lightColor: 0x86efac,
+        hasAntenna: true,
       },
     ],
   },
@@ -210,6 +232,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "materials", amount: 8 }, cycleSeconds: 18 },
         outputCapacity: 35,
         height: 20,
+        windowRows: 2,
+        windowCols: 1,
+        lightColor: 0x67e8f9,
       },
       {
         label: "Recycling Plant",
@@ -220,6 +245,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "materials", amount: 18 }, cycleSeconds: 18 },
         outputCapacity: 60,
         height: 28,
+        windowRows: 2,
+        windowCols: 2,
+        lightColor: 0x67e8f9,
       },
       {
         label: "Automated Recycler",
@@ -230,6 +258,10 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: {}, output: { resource: "materials", amount: 28 }, cycleSeconds: 16 },
         outputCapacity: 90,
         height: 34,
+        windowRows: 3,
+        windowCols: 2,
+        lightColor: 0x67e8f9,
+        hasAntenna: true,
       },
     ],
   },
@@ -250,6 +282,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: { materials: 6 }, output: { resource: "components", amount: 4 }, cycleSeconds: 20 },
         outputCapacity: 30,
         height: 26,
+        windowRows: 2,
+        windowCols: 2,
+        lightColor: 0xfb923c,
       },
       {
         label: "Assembly Workshop",
@@ -260,6 +295,9 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: { materials: 10 }, output: { resource: "components", amount: 8 }, cycleSeconds: 20 },
         outputCapacity: 50,
         height: 34,
+        windowRows: 2,
+        windowCols: 3,
+        lightColor: 0xfb923c,
       },
       {
         label: "Automated Assembly",
@@ -270,6 +308,11 @@ export const BUILDING_DEFS: BuildingDef[] = [
         recipe: { inputs: { materials: 14 }, output: { resource: "components", amount: 13 }, cycleSeconds: 18 },
         outputCapacity: 75,
         height: 42,
+        windowRows: 3,
+        windowCols: 3,
+        lightColor: 0xfb923c,
+        hasAntenna: true,
+        hasSign: true,
       },
     ],
   },

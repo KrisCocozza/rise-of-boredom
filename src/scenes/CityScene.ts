@@ -26,6 +26,7 @@ import { IsoGrid } from "../game/isoGrid";
 import { createBuildingVisual } from "../game/buildingVisual";
 import { processCutoutTexture } from "../game/spriteTexture";
 import { registerSprite } from "../game/spriteRegistry";
+import { createCityBackground } from "../game/background";
 import { PanelButtonHandle, StepperHandle, createPanelButton, createStepper, roundedPanel } from "../ui/panel";
 
 const GRID_SIZE = 10;
@@ -90,6 +91,7 @@ export class CityScene extends Phaser.Scene {
   private uiConsumedClick = false;
 
   private tilesLayer!: Phaser.GameObjects.Graphics;
+  private gridGlowLayer!: Phaser.GameObjects.Graphics;
   private hoverLayer!: Phaser.GameObjects.Graphics;
   private buildingsLayer!: Phaser.GameObjects.Container;
 
@@ -132,7 +134,10 @@ export class CityScene extends Phaser.Scene {
     this.state = loadGame();
     this.grid = new IsoGrid(TILE_WIDTH, TILE_HEIGHT, width / 2, 205);
 
+    createCityBackground(this, this.scale.width, this.scale.height);
+
     this.tilesLayer = this.add.graphics().setDepth(-100);
+    this.gridGlowLayer = this.add.graphics().setDepth(-99).setBlendMode(Phaser.BlendModes.ADD);
     this.buildingsLayer = this.add.container(0, 0);
     this.hoverLayer = this.add.graphics().setDepth(1000);
 
@@ -155,12 +160,29 @@ export class CityScene extends Phaser.Scene {
 
   private drawBaseGrid(): void {
     this.tilesLayer.clear();
+    this.gridGlowLayer.clear();
     for (let row = 0; row < GRID_SIZE; row++) {
       for (let col = 0; col < GRID_SIZE; col++) {
         const alt = (col + row) % 2 === 0;
         this.drawTileDiamond(col, row, alt ? TILE_FILL : TILE_FILL_ALT, TILE_STROKE);
+        this.drawTileGlowOutline(col, row);
       }
     }
+  }
+
+  /** A faint additive-blended cyan outline over every tile — a subtle "digital grid" glow. */
+  private drawTileGlowOutline(col: number, row: number): void {
+    const { x, y } = this.grid.toScreen(col, row);
+    const hw = TILE_WIDTH / 2;
+    const hh = TILE_HEIGHT / 2;
+    this.gridGlowLayer.lineStyle(1, 0x22d3ee, 0.08);
+    this.gridGlowLayer.beginPath();
+    this.gridGlowLayer.moveTo(x, y - hh);
+    this.gridGlowLayer.lineTo(x + hw, y);
+    this.gridGlowLayer.lineTo(x, y + hh);
+    this.gridGlowLayer.lineTo(x - hw, y);
+    this.gridGlowLayer.closePath();
+    this.gridGlowLayer.strokePath();
   }
 
   private drawTileDiamond(col: number, row: number, fill: number, stroke: number): void {

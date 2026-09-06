@@ -52,6 +52,8 @@ export function createBuildingVisual(
     container.add(img);
   } else if (level.windowRows && level.windowCols) {
     buildWindowedBlock(scene, container, grid, col, row, def, level);
+  } else if (level.hasPanelLines) {
+    buildPanelBlock(scene, container, grid, col, row, def, level);
   } else {
     const corners = footprintGroundCorners(grid, col, row, def.footprint.w, def.footprint.h, 0.9);
     const g = scene.add.graphics();
@@ -90,9 +92,10 @@ function buildWindowedBlock(
         const p = lerp(bottomEdge, topEdge, 0.14 + v * 0.72);
 
         const lit = Math.random() > 0.35;
-        const winColor = lit ? 0xfff3b0 : 0x0b1220;
+        const winColor = lit ? (level.lightColor ?? 0xfff3b0) : 0x0b1220;
         const win = scene.add.rectangle(p.x, p.y, 5, 6, winColor, lit ? 0.9 : 0.6);
         container.add(win);
+        if (lit) win.postFX.addGlow(winColor, 0.4, 0, false, 0.15, 6);
         if (lit && Math.random() > 0.6) flickerTargets.push(win);
       }
     }
@@ -123,6 +126,7 @@ function buildWindowedBlock(
 
     const light = scene.add.circle(nTop.x, tipY, 3, 0xff2965, 1);
     container.add(light);
+    light.postFX.addGlow(0xff2965, 0.6, 0, false, 0.15, 10);
     scene.tweens.add({ targets: light, alpha: 0.2, duration: 550, yoyo: true, repeat: -1 });
   }
 
@@ -130,8 +134,47 @@ function buildWindowedBlock(
     const signWidth = Math.hypot(eTop.x - wTop.x, eTop.y - wTop.y) * 0.45;
     const sign = scene.add.rectangle(nTop.x, nTop.y + 8, signWidth, 8, 0xf472b6, 0.85);
     container.add(sign);
+    sign.postFX.addGlow(0xf472b6, 0.5, 0, false, 0.15, 8);
     scene.tweens.add({ targets: sign, alpha: 0.5, duration: 450, yoyo: true, repeat: -1 });
   }
+}
+
+/** Flat infrastructure skin (Solar): thin glowing seam lines across the faces instead of windows. */
+function buildPanelBlock(
+  scene: Phaser.Scene,
+  container: Phaser.GameObjects.Container,
+  grid: IsoGrid,
+  col: number,
+  row: number,
+  def: BuildingDef,
+  level: BuildingLevel,
+): void {
+  const corners = footprintGroundCorners(grid, col, row, def.footprint.w, def.footprint.h, 0.9);
+  const g = scene.add.graphics();
+  container.add(g);
+  const { w, s, e, wTop, sTop, eTop } = drawExtrudedBlock(g, corners, def.color, level.height);
+
+  const seams = scene.add.graphics();
+  container.add(seams);
+  seams.lineStyle(1, 0x67e8f9, 0.5);
+  const seamCount = 4;
+
+  function drawSeams(bottomA: Point, bottomB: Point, topA: Point, topB: Point): void {
+    for (let i = 1; i < seamCount; i++) {
+      const v = i / seamCount;
+      const a = lerp(bottomA, topA, v);
+      const b = lerp(bottomB, topB, v);
+      seams.beginPath();
+      seams.moveTo(a.x, a.y);
+      seams.lineTo(b.x, b.y);
+      seams.strokePath();
+    }
+  }
+  drawSeams(w, s, wTop, sTop);
+  drawSeams(s, e, sTop, eTop);
+
+  // Slow catch-the-light pulse across the whole panel array rather than per-window flicker.
+  scene.tweens.add({ targets: seams, alpha: 0.15, duration: 1600, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
 }
 
 function roofTopCenter(corners: GroundCorners, height: number): Point {
@@ -174,6 +217,7 @@ function applyStatusOverlay(
   if (status.readyToCollect) {
     const badge = scene.add.circle(topCenter.x, topCenter.y - 14, 7, 0xfacc15, 1);
     container.add(badge);
+    badge.postFX.addGlow(0xfacc15, 0.6, 0, false, 0.15, 10);
     scene.tweens.add({ targets: badge, y: badge.y - 5, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
