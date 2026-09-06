@@ -68,14 +68,36 @@ and so the whole simulation is serializable for save/load:
   drains Food upkeep, and evaluates quest completion. `derived.ts` has the
   shared read-only queries (population/worker/energy totals, footprint
   occupancy) used by both the simulation and the view.
-- **View** (`src/scenes/CityScene.ts` + `src/ui/`) — Phaser. Owns a
-  `GameState`, ticks it once a second, autosaves periodically, and renders
-  buildings/HUD from state. Turns clicks into calls into `actions.ts`.
+- **Controller** (`src/game/controller.ts`) — the single owner of `GameState`
+  plus the interaction mode (what you're placing / moving / have selected).
+  Every action goes through it, so it can autosave and then `notify()` its
+  subscribers; the two views below never mutate state themselves. It also
+  drives time via `setInterval` + `catchUp()` on wall-clock elapsed time
+  rather than Phaser's rAF clock, so a backgrounded or throttled tab doesn't
+  silently freeze the simulation.
+- **World view** (`src/scenes/CityScene.ts`) — Phaser, and *only* the world:
+  grid, buildings, placement ghost, collect float-text. It subscribes to the
+  controller and re-renders on change.
+- **Interface** (`src/ui/`) — a DOM/CSS overlay above the canvas holding all
+  chrome: `topBar.ts` (resources, population/energy meters, hover tooltips),
+  `buildMenu.ts` (categorised, tooltipped building cards), `objectives.ts`
+  (drawer with live progress bars), `inspector.ts` (selected building:
+  buffer + collect, worker stepper, upgrade/move/demolish), plus `modal.ts`,
+  `toasts.ts`, `hoverTip.ts`, and `floatingTip.ts`. `dom.ts` has the `el()`
+  builder and resource icons; `ui.css` is the whole visual language.
+
+Putting the interface in the DOM rather than drawing it into the canvas is
+what makes text crisp, gives real hover/scroll/transitions for free, and —
+because a click on a panel simply never reaches the canvas — removes the
+manual hit-region bookkeeping the old in-canvas UI needed.
 
 Everything else is presentation, reused from the original prototype:
-`isoGrid.ts` (grid↔screen math), `spriteTexture.ts`/`spriteRegistry.ts` (the
-real-art pipeline), `ui/panel.ts` (the rounded-card button/panel look, plus a
-`createStepper` +/- control for worker assignment).
+`isoGrid.ts` (grid↔screen math), `background.ts` (skyline/rain atmosphere),
+and `spriteTexture.ts`/`spriteRegistry.ts` (the real-art pipeline).
+
+The canvas renders a fixed 1024×768 world scaled to fit the window
+(`Phaser.Scale.FIT`), so grid math stays in stable game-space coordinates
+while the interface anchors to the real window edges.
 
 ### Production, buffers, and collection
 
@@ -118,6 +140,15 @@ The image was generated via Hugging Face's free Inference API
 isometric camera angle, orthographic dimetric projection, no perspective
 distortion", "smooth 3D render, cel-shaded", the building described as wide
 and multi-story with a grid of windows, isolated on a plain background.
+
+## Controls
+
+- **B** or the Build button — open/close the build menu.
+- **Click a tile** with a building selected to place it; **Esc** or
+  **right-click** cancels placing/moving.
+- **Click a placed building** to open its inspector; if its output buffer has
+  something in it, that click collects instead.
+- **Gear button** — help, and New Game (wipes the save, with confirmation).
 
 ## Building upgrades
 

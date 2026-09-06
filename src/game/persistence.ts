@@ -4,6 +4,15 @@ import { catchUp } from "./state/simulation";
 
 const STORAGE_KEY = "rise-of-boredom:save:v1";
 
+/** Wipes the save so the next load starts a fresh game (used by the game menu's New Game). */
+export function clearSave(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Same private-browsing caveat as saveGame — nothing useful to do.
+  }
+}
+
 export function saveGame(state: GameState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));

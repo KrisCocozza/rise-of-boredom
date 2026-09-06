@@ -1,4 +1,6 @@
 import { BuildingDef, BuildingLevel, Footprint, getBuildingDef } from "../content/buildings";
+import { QuestObjective } from "../content/quests";
+import { ResourceId } from "../content/resources";
 import { GameState, PlacedBuildingState } from "./types";
 
 export interface GridCell {
@@ -104,4 +106,69 @@ export function buildingEfficiency(level: BuildingLevel, assignedWorkers: number
   const wRatio = workerRatio(level, assignedWorkers);
   const energyRatio = level.energyRequired > 0 ? energyShare : 1;
   return Math.min(wRatio, energyRatio);
+}
+
+export interface QuestProgress {
+  current: number;
+  target: number;
+}
+
+/** Live progress toward a quest objective, for the objectives panel's progress bars. */
+export function questProgress(state: GameState, objective: QuestObjective): QuestProgress {
+  switch (objective.type) {
+    case "buildCount":
+      return {
+        current: state.buildings.filter((b) => b.defId === objective.buildingId).length,
+        target: objective.count,
+      };
+    case "upgradeReached": {
+      const best = Math.max(0, ...state.buildings.filter((b) => b.defId === objective.buildingId).map((b) => b.levelIndex + 1));
+      return { current: best, target: objective.minLevel };
+    }
+    case "stockpileAtLeast":
+      return { current: Math.floor(state.resources[objective.resource] ?? 0), target: objective.amount };
+    case "lifetimeProducedAtLeast":
+      return { current: Math.floor(state.lifetimeProduced[objective.resource] ?? 0), target: objective.amount };
+    case "populationAtLeast":
+      return { current: totalPopulationCapacity(state), target: objective.amount };
+    case "availableWorkersAtLeast":
+      return { current: availableWorkers(state), target: objective.amount };
+  }
+}
+
+export interface ResourceRates {
+  /** Units/sec currently flowing into building output buffers, per resource (paused buildings excluded). */
+  bufferFill: Partial<Record<ResourceId, number>>;
+  /** Units/sec currently drawn from the global stockpile (recipe inputs + food upkeep). */
+  drain: Partial<Record<ResourceId, number>>;
+}
+
+/** Current per-second flow rates, for the top bar's resource tooltips. */
+export function computeResourceRates(state: GameState, foodUpkeepPerPop: number): ResourceRates {
+  const energyShare = computeEnergyStatus(state).share;
+  const bufferFill: ResourceRates["bufferFill"] = {};
+  const drain: ResourceRates["drain"] = {};
+
+  for (const b of state.buildings) {
+    const def = getBuildingDef(b.defId);
+    const level = currentLevel(b, def);
+    if (!level?.recipe || b.assignedWorkers <= 0) continue;
+    if ((level.outputCapacity ?? Infinity) - b.outputBuffer <= 0) continue; // buffer full — paused
+
+    const efficiency = buildingEfficiency(level, b.assignedWorkers, energyShare);
+    if (efficiency <= 0) continue;
+    const rate = efficiency / level.recipe.cycleSeconds;
+
+    const out = level.recipe.output;
+    bufferFill[out.resource] = (bufferFill[out.resource] ?? 0) + out.amount * rate;
+    for (const [res, amt] of Object.entries(level.recipe.inputs)) {
+      const key = res as ResourceId;
+      drain[key] = (drain[key] ?? 0) + (amt ?? 0) * rate;
+    }
+  }
+
+  const upkeep = totalPopulationCapacity(state) * foodUpkeepPerPop;
+  if (upkeep > 0) drain.food = (drain.food ?? 0) + upkeep;
+
+  return { bufferFill, drain };
 }

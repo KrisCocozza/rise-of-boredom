@@ -20,7 +20,7 @@ function fail(reason: string): ActionResult {
   return { ok: false, reason };
 }
 
-function canAfford(state: GameState, cost: ResourceAmount): boolean {
+export function canAfford(state: GameState, cost: ResourceAmount): boolean {
   return Object.entries(cost).every(([res, amt]) => (state.resources[res as ResourceId] ?? 0) >= (amt ?? 0));
 }
 

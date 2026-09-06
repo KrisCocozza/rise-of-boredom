@@ -11,7 +11,7 @@ import {
 import { GameState, PlacedBuildingState } from "./types";
 
 /** Food upkeep drawn from the stockpile per unit of population per second. Placeholder — tune after playtesting. */
-const FOOD_UPKEEP_PER_POP = 0.03;
+export const FOOD_UPKEEP_PER_POP = 0.03;
 /** Ceiling on a single offline catch-up simulation, so leaving the tab closed for days doesn't cost a slow loop. */
 const MAX_OFFLINE_SECONDS = 8 * 60 * 60;
 
